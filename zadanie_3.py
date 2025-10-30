@@ -1,7 +1,7 @@
 # Program tworzący zadane argumentami katalogi,
 # oraz odczytujący dane z / wpisujący dane do plików csv.
 
-import argparse, random
+import argparse, random, os
 
 month_names   = [  "sty", "lut", "mar", "kwi", "maj",
                    "cze", "lip", "sie", "wrz",
@@ -11,7 +11,7 @@ weekday_names = [  "pn", "wt", "śr", "cz", "pt", "so", "nd"  ]
 
 time_of_day   = [  "r", "w"  ]
 
-mode          = [  "-o", "-t"  ]
+mode          = [  "o", "t"  ]
 
 # Funkcja rozdziela dni oraz sprawdza poprawność danych.
 def parse_grouped_days(all_days):
@@ -20,7 +20,7 @@ def parse_grouped_days(all_days):
     for group in all_days:
         days = group.split(",")
         nr_of_days += len(days)
-        valid = {d for d in days if d in weekday_names}
+        valid = [d for d in days if d in weekday_names]
         invalid = [d for d in days if d not in weekday_names]
         if invalid:
             raise argparse.ArgumentTypeError("Nieprawidłowe nazwy dni tygodnia")
@@ -37,8 +37,7 @@ parser.add_argument("--months", nargs="+", required=True,
                     choices=month_names, help="Podaj miesiące")
 parser.add_argument("--times", nargs="*", default=["r"],
                     choices=time_of_day, help="Podaj pory dnia")
-parser.add_argument("--mode", nargs=1, default="o",
-                    choices=mode, help="Podaj tryb: odczyt/tworzenie")
+parser.add_argument("--mode", choices=mode, default="o", help="Podaj tryb: odczyt (o) lub tworzenie (t)")
 parsed, remaining = parser.parse_known_args()
 
 months_chosen = { month: '' for month in parsed.months }
@@ -63,18 +62,52 @@ path_tuples = [(month, day, time) for ((month, day), time) in zip(path_tuples, t
 
 print(path_tuples)
 
-# TODO - stworzenie ścieżek
+# Tworzenie katalogów i zapis plików
+if parsed.mode == "t":
+    for (month, day, time) in path_tuples:
+        # Ścieżka katalogu np. "sty/pn/r"
+        dir_path = os.path.join(month, day, time)
+        os.makedirs(dir_path, exist_ok=True)
 
-# Tworzenie pliku
-if parsed.mode == ["t"]:
-    # for (month, day, time) in path_tuples:
-    # utworzyć plik pod odpowiednią ścieżką
-    file = open("Dane.csv", "w")
-    file.write("Model; Wynik; Czas;\n")
-    letter = random.choice(["A", "B", "C"])
-    x, y = random.randint(0, 1000), random.randint(0, 1000)
-    file.write(str(letter)+"; "+str(x)+"; "+str(y)+"s;")
-    file.close()
+        # Pełna ścieżka do pliku CSV
+        file_path = os.path.join(dir_path, "Dane.csv")
 
-#else: TODO - odczyt z pliku
+        # Zapis danych do pliku
+        with open(file_path, "w", encoding="utf-8", newline="") as f:
+            f.write("Model; Wynik; Czas\n")
+            letter = random.choice(["A", "B", "C"])
+            x, y = random.randint(0, 1000), random.randint(0, 1000)
+            f.write(f"{letter}; {x}; {y}s\n")
+
+        print(f"Utworzono plik: {file_path}")
+
+
+# Odczyt i sumowanie danych
+if parsed.mode == "o":
+    total_time = 0
+    found_files = 0
+
+    for (month, day, time) in path_tuples:
+        file_path = os.path.join(month, day, time, "Dane.csv")
+
+        if os.path.exists(file_path):
+            found_files += 1
+            with open(file_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()[1:]
+                for line in lines:
+                    parts = [p.strip() for p in line.split(";")]
+                    if len(parts) >= 3:
+                        model, _, czas = parts
+                        if model == "A":
+                            try:
+                                total_time += int(czas.replace("s", "").strip())
+                            except ValueError:
+                                pass
+
+    if found_files == 0:
+        print("Nie znaleziono żadnych plików Dane.csv.")
+    else:
+        print(f"Suma czasów (Model == A) ze wszystkich plików: {total_time}s")
+
+
 
