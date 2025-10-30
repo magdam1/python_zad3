@@ -61,8 +61,6 @@ for (month, days) in zip(months_chosen, days_by_month):
 
 path_tuples = [(month, day, time) for ((month, day), time) in zip(path_tuples, times_chosen)]
 
-print(path_tuples)
-
 # Tworzenie katalogów i zapis plików
 if parsed.mode == "t":
     for (month, day, time) in path_tuples:
