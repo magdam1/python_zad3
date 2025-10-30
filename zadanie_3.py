@@ -1,4 +1,4 @@
-#Autorzy: Magdalena Molenda, Iwona Raczkowska
+# Autorzy: Magdalena Molenda, Iwona Raczkowska
 # Program tworzący zadane argumentami katalogi,
 # oraz odczytujący dane z / wpisujący dane do plików csv.
 
@@ -109,6 +109,7 @@ if parsed.mode == "o":
         print("Nie znaleziono żadnych plików Dane.csv.")
     else:
         print(f"Suma czasów (Model == A) ze wszystkich plików: {total_time}s")
+
 
 
 
